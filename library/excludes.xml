@@ -1,0 +1,5 @@
+<excludes>
+	<local>
+        <regexp pattern="js/websocket.swf" />
+    </local>
+</excludes>
