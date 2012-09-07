@@ -1,0 +1,10 @@
+<project name='WebSocket' url='https://code.google.com/p/haxe-websocket' license='LGPL'>
+    <user name='yar3333'/>
+    <tag v='html5'/>
+    <tag v='websocket'/>
+    <tag v='websockets'/>
+    <tag v='neko'/>
+    <tag v='js'/>
+    <description>HTML5 websocket support for js (client) and neko (server).</description>
+    <version name='1.0'>Basic RFC 6455 support.</version>
+</project>
