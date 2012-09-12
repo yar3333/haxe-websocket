@@ -5,6 +5,7 @@
     <tag v='websockets'/>
     <tag v='neko'/>
     <tag v='js'/>
-    <description>HTML5 websocket support for js (client) and neko (server).</description>
-    <version name='1.0'>Basic RFC 6455 support.</version>
+    <tag v='php'/>
+    <description>HTML5 websocket support for js (client) and neko/php (server).</description>
+    <version name='1.1'>Server to client bugfix.</version>
 </project>
