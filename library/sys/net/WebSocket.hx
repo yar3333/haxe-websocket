@@ -69,6 +69,8 @@ class WebSocket
 	
 	public function send(data:String) : Void
 	{
+		socket.output.writeByte(0x81);
+		
 		var len = 0;
 		if       (data.length < 126) 	len = data.length;
 		else  if (data.length < 65536)	len = 126;
@@ -92,7 +94,7 @@ class WebSocket
 			}
 		}
 		
-		socket.output.writeString(String.fromCharCode(0x81) + String.fromCharCode(data.length) + data);
+		socket.output.writeString(data);
 	}
 	
 	/*public function close(aCloseCode:Int, aCloseReason:String):Void
