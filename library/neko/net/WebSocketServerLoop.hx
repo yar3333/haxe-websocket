@@ -107,6 +107,11 @@ class WebSocketServerLoop<TClientData:ClientData> extends neko.net.ServerLoop<TC
 				}
 			}
 			else
+			if (buf.get(bufpos) == 0x88)
+			{
+				throw "Client request connection to close.";
+			}
+			else
 			{
 				throw "Bad websocket string. First char of '" + buf.readString(bufpos, buflen - bufpos) + "' is " + buf.get(bufpos) + ".";
 			}
