@@ -88,7 +88,7 @@ class WebSocket
 			else
 			{
 				socket.output.writeByte((data.length >> 24) & 0xFF);
-				socket.output.writeByte((data.length >> 16)& 0xFF);
+				socket.output.writeByte((data.length >> 16) & 0xFF);
 				socket.output.writeByte((data.length >> 8) & 0xFF);
 				socket.output.writeByte(data.length & 0xFF);
 			}
