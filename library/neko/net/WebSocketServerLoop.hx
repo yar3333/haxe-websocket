@@ -29,7 +29,7 @@ class WebSocketServerLoop<TClientData:ClientData> extends neko.net.ServerLoop<TC
 		//Lib.println("===== RECEIVE (" + bufpos + ", " + buflen + "): " + buf.readString(bufpos, buflen - bufpos));
 		if (d.isHandsShakeDone)
 		{
-			Lib.println("===== DUMP:" + dump(buf, bufpos, buflen));
+			//Lib.println("===== DUMP:" + dump(buf, bufpos, buflen));
 			if (buf.get(bufpos) == 0x00)
 			{
 				for (i in (bufpos + 1)...buflen)
