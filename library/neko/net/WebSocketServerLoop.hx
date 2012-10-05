@@ -1,12 +1,12 @@
 package neko.net;
 
-//import neko.Lib;
+import haxe.Stack;
+import neko.Lib;
 
 import sys.net.Socket;
 import sys.net.Host;
 import sys.net.WebSocket;
-import sys.net.WebSocketServerTools;
-
+import sys.net.WebSocketTools;
 import haxe.io.Bytes;
 
 class ClientData
@@ -16,13 +16,19 @@ class ClientData
 	
 	public function new(socket:Socket)
 	{
-		ws = new WebSocket(socket);
+		ws = new WebSocket(socket, true);
 	}
 }
 
 class WebSocketServerLoop<TClientData:ClientData> extends neko.net.ServerLoop<TClientData>
 {
 	public var processIncomingMessage : TClientData->String->Void;
+	public var processDisconnect : TClientData->Void;
+	
+	public function new(processNewData : Socket->TClientData)
+	{
+		super(processNewData);
+	}
 	
 	override function processClientData(d:TClientData, buf:Bytes, bufpos:Int, buflen:Int) : Int
 	{
@@ -137,57 +143,72 @@ class WebSocketServerLoop<TClientData:ClientData> extends neko.net.ServerLoop<TC
 	{
 		if (buf.get(bufpos) == "<".code)
 		{
-			//Lib.print("===== shakeHands - try to find 0x00: ");
+			Lib.print("===== shakeHands - try to find 0x00: ");
 			for (i in bufpos...buflen)
 			{
 				if (buf.get(i) == 0x00)
 				{
-					//Lib.println("OK");
-					//Lib.println("===== OUT: <POLICY>");
+					Lib.println("OK");
+					Lib.println("===== OUT: <POLICY>");
 					d.ws.socket.output.writeString('<cross-domain-policy><allow-access-from domain="*" to-ports="*" /></cross-domain-policy>' + String.fromCharCode(0x00));
 					closeConnection(d.ws.socket);
 					return i + 1 - bufpos;
 				}
 			}
-			//Lib.println("FAIL");
+			Lib.println("FAIL");
 			return 0;
 		}
 		else
 		{
-			//Lib.print("===== shakeHands - try to find \\r\\n\\r\\n: ");
+			Lib.print("===== shakeHands - try to find \\r\\n\\r\\n: ");
 			for (i in bufpos...(buflen - 3))
 			{
 				if (buf.get(i) == '\r'.code && buf.get(i + 1) == '\n'.code && buf.get(i + 2) == '\r'.code && buf.get(i + 3) == '\n'.code)
 				{
-					//Lib.println("OK");
+					Lib.println("OK");
 					
 					var lines = buf.readString(bufpos, i - bufpos).split("\r\n");
+					
+					trace("lines = ");
+					trace(lines);
 					
 					//var methodUrlProtocol = lines[0];
 					var clientHeaders = new Hash<String>();
 					for (j in 1...lines.length)
 					{
+						Lib.println("j = " + j);
 						var t = lines[j].split(":");
 						if (t.length == 2)
 						{
-							clientHeaders.set(StringTools.trim(t[0]), StringTools.trim(t[1]));
+							clientHeaders.set(StringTools.trim(t[0]), StringTools.trim(t.slice(1).join(":")));
 						}
 					}
 					
-					WebSocketServerTools.sendHandsShake(d.ws.socket, clientHeaders.get("Sec-WebSocket-Key"));
+					Lib.println("WebSocketServerTools.sendHandsShake...");
+					WebSocketTools.sendServerHandShake(d.ws.socket, clientHeaders.get("Sec-WebSocket-Key"));
+					Lib.println("WebSocketServerTools.sendHandsShake done.");
 					
 					d.isHandsShakeDone = true;
 					
 					return i + 4 - bufpos;
 				}
 			}
-			//Lib.println("FAIL");
+			Lib.println("FAIL");
 			return 0;
 		}
 	}
 	
 	override function onError(e:Dynamic)
 	{
-		neko.Lib.println(e);
+		Lib.print(e);
+		Lib.println(Stack.toString(Stack.exceptionStack()));
+	}
+	
+	override function clientDisconnected(d:TClientData)
+	{
+		if (processDisconnect != null)
+		{
+			processDisconnect(d);
+		}
 	}
 }
