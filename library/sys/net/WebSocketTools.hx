@@ -3,9 +3,9 @@ package sys.net;
 import haxe.SHA1;
 import sys.net.Socket;
 
-class WebSocketServerTools 
+class WebSocketTools 
 {
-	public static function sendHandsShake(socket:Socket, inpKey:String)
+	public static function sendServerHandShake(socket:Socket, inpKey:String)
 	{
 		var outKey = encodeBase64(hex2data(SHA1.encode(StringTools.trim(inpKey) + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11")));
 		
@@ -14,6 +14,20 @@ class WebSocketServerTools
 			  + "Connection: Upgrade\r\n"
 			  + "Sec-WebSocket-Accept: " + outKey + "\r\n"
 			  + "\r\n";
+		
+		socket.output.writeString(s);
+	}
+	
+	public static function sendClientHandShake(socket:Socket, url:String, host:String, port:Int, key:String, origin:String)
+	{
+		var s = "GET " + url + " HTTP/1.1\r\n"
+			  + "Host: " + host + ":" + Std.string(port) + "\r\n"
+			  + "Upgrade: websocket\r\n"
+			  + "Connection: Upgrade\r\n"
+			  + "Sec-WebSocket-Key: " + encodeBase64(key) + "\r\n"
+			  + "Origin: " + origin + "\r\n"
+			  + "\r\n";
+			  
 		
 		socket.output.writeString(s);
 	}

@@ -38,11 +38,14 @@ class WebSocketFrame
 
 class WebSocket
 {
-	public var socket : Socket;
+	var isServer : Bool;
 	
-	public function new(socket:Socket)
+	public var socket(default, null) : Socket;
+	
+	public function new(socket:Socket, isServer:Bool)
 	{
 		this.socket = socket;
+		this.isServer = isServer;
 	}
 	
 	public static function connect(host:String, port:Int, origin:String, url:String) : WebSocket
@@ -50,21 +53,15 @@ class WebSocket
 		var socket = new Socket();
 		socket.connect(new Host(host), port);
 		
-		var ts = "GET " + url + " HTTP/1.1\r\n"
-			   + "Upgrade: WebSocket\r\n"
-			   + "Connection: Upgrade\r\n"
-			   + "Host: " + host + ":" + Std.string(port) + "\r\n"
-			   + "Origin: " + origin + "\r\n"
-			   + "\r\n";
-		socket.output.writeString(ts);
+		WebSocketTools.sendClientHandShake(socket, url, host, port, "key", "haquery");
 		
 		var rLine : String;
 		while((rLine = socket.input.readLine()) != "")
 		{
-			//trace("Server Handshake :" + rLine);
+			trace("Handshake from server: " + rLine);
 		}
 		
-		return new WebSocket(socket);
+		return new WebSocket(socket, false);
 	}
 	
 	public function send(data:String) : Void
@@ -76,7 +73,7 @@ class WebSocket
 		else  if (data.length < 65536)	len = 126;
 		else 							len = 127;
 		
-		socket.output.writeByte(len);
+		socket.output.writeByte(len | (!isServer ? 0x80 : 0x00));
 
 		if (data.length >= 126)
 		{
@@ -94,7 +91,62 @@ class WebSocket
 			}
 		}
 		
-		socket.output.writeString(data);
+		if (isServer)
+		{
+			socket.output.writeString(data);
+		}
+		else
+		{
+			var mask = [ Std.random(256), Std.random(256), Std.random(256), Std.random(256) ];
+			socket.output.writeByte(mask[0]);
+			socket.output.writeByte(mask[1]);
+			socket.output.writeByte(mask[2]);
+			socket.output.writeByte(mask[3]);
+			var maskedData = new StringBuf();
+			for (i in 0...data.length)
+			{
+				maskedData.addChar(data.charCodeAt(i) ^ mask[i % 4]);
+			}
+			socket.output.writeString(maskedData.toString());
+		}
+		
+	}
+	
+	public function recv() : String
+	{
+		var opcode = socket.input.readByte();
+		if (opcode == 0x81) // 0x81 = fin & text
+		{
+			var len = socket.input.readByte();
+			if (len & 0x80 == 0) // !mask
+			{
+				if (len == 126)
+				{
+					var lenByte0 = socket.input.readByte();
+					var lenByte1 = socket.input.readByte();
+					len = (lenByte0 << 8) + lenByte1;
+				}
+				else
+				if (len > 126)
+				{
+					var lenByte0 = socket.input.readByte();
+					var lenByte1 = socket.input.readByte();
+					var lenByte2 = socket.input.readByte();
+					var lenByte3 = socket.input.readByte();
+					len = (lenByte0 << 24) + (lenByte1 << 16) + (lenByte2 << 8) + lenByte3;
+				}
+				return socket.input.read(len).toString();
+			}
+			else
+			{
+				throw "Expected unmasked data.";
+			}
+		}
+		else
+		{
+			throw "Unsupported websocket opcode: " + opcode;
+		}
+		return null;
 	}
 	
 	/*public function close(aCloseCode:Int, aCloseReason:String):Void
