@@ -58,7 +58,7 @@ class WebSocket
 		var rLine : String;
 		while((rLine = socket.input.readLine()) != "")
 		{
-			trace("Handshake from server: " + rLine);
+			//trace("Handshake from server: " + rLine);
 		}
 		
 		return new WebSocket(socket, false);

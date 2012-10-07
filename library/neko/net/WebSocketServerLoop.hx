@@ -24,6 +24,7 @@ class WebSocketServerLoop<TClientData:ClientData> extends neko.net.ServerLoop<TC
 {
 	public var processIncomingMessage : TClientData->String->Void;
 	public var processDisconnect : TClientData->Void;
+	public var processUpdate : Void->Void;
 	
 	public function new(processNewData : Socket->TClientData)
 	{
@@ -143,40 +144,36 @@ class WebSocketServerLoop<TClientData:ClientData> extends neko.net.ServerLoop<TC
 	{
 		if (buf.get(bufpos) == "<".code)
 		{
-			Lib.print("===== shakeHands - try to find 0x00: ");
+			//Lib.print("===== shakeHands - try to find 0x00: ");
 			for (i in bufpos...buflen)
 			{
 				if (buf.get(i) == 0x00)
 				{
-					Lib.println("OK");
-					Lib.println("===== OUT: <POLICY>");
+					//Lib.println("OK");
+					//Lib.println("===== OUT: <POLICY>");
 					d.ws.socket.output.writeString('<cross-domain-policy><allow-access-from domain="*" to-ports="*" /></cross-domain-policy>' + String.fromCharCode(0x00));
 					closeConnection(d.ws.socket);
 					return i + 1 - bufpos;
 				}
 			}
-			Lib.println("FAIL");
+			//Lib.println("FAIL");
 			return 0;
 		}
 		else
 		{
-			Lib.print("===== shakeHands - try to find \\r\\n\\r\\n: ");
+			//Lib.print("===== shakeHands - try to find \\r\\n\\r\\n: ");
 			for (i in bufpos...(buflen - 3))
 			{
 				if (buf.get(i) == '\r'.code && buf.get(i + 1) == '\n'.code && buf.get(i + 2) == '\r'.code && buf.get(i + 3) == '\n'.code)
 				{
-					Lib.println("OK");
+					//Lib.println("OK");
+					//Lib.println("HandShake received.");
 					
 					var lines = buf.readString(bufpos, i - bufpos).split("\r\n");
-					
-					trace("lines = ");
-					trace(lines);
-					
 					//var methodUrlProtocol = lines[0];
 					var clientHeaders = new Hash<String>();
 					for (j in 1...lines.length)
 					{
-						Lib.println("j = " + j);
 						var t = lines[j].split(":");
 						if (t.length == 2)
 						{
@@ -184,24 +181,23 @@ class WebSocketServerLoop<TClientData:ClientData> extends neko.net.ServerLoop<TC
 						}
 					}
 					
-					Lib.println("WebSocketServerTools.sendHandsShake...");
+					//Lib.print("WebSocketTools.sendHandsShake: ");
 					WebSocketTools.sendServerHandShake(d.ws.socket, clientHeaders.get("Sec-WebSocket-Key"));
-					Lib.println("WebSocketServerTools.sendHandsShake done.");
+					//Lib.println("OK");
 					
 					d.isHandsShakeDone = true;
 					
 					return i + 4 - bufpos;
 				}
 			}
-			Lib.println("FAIL");
+			//Lib.println("FAIL");
 			return 0;
 		}
 	}
 	
 	override function onError(e:Dynamic)
 	{
-		Lib.print(e);
-		Lib.println(Stack.toString(Stack.exceptionStack()));
+		trace(e + Stack.toString(Stack.exceptionStack()));
 	}
 	
 	override function clientDisconnected(d:TClientData)
@@ -210,5 +206,18 @@ class WebSocketServerLoop<TClientData:ClientData> extends neko.net.ServerLoop<TC
 		{
 			processDisconnect(d);
 		}
+	}
+	
+	override function update()
+	{
+		if (processUpdate != null)
+		{
+			processUpdate();
+		}
+	}
+	
+	public function stop()
+	{
+		socks[0].close();
 	}
 }
