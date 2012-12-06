@@ -13,11 +13,11 @@ import js.SWFObject;
 	public static var WEB_SOCKET_SWF_LOCATION(WEB_SOCKET_SWF_LOCATION_getter, WEB_SOCKET_SWF_LOCATION_setter) : String;
 	private static inline function WEB_SOCKET_SWF_LOCATION_getter() : String
 	{
-		return untyped Lib.window.WEB_SOCKET_SWF_LOCATION;
+		return cast(Lib.window).WEB_SOCKET_SWF_LOCATION;
 	}
 	private static inline function WEB_SOCKET_SWF_LOCATION_setter(path:String) : String
 	{
-		return untyped Lib.window.WEB_SOCKET_SWF_LOCATION = path;
+		return cast(Lib.window).WEB_SOCKET_SWF_LOCATION = path;
 	}
 	
 	public var readyState(default, null) : Int;

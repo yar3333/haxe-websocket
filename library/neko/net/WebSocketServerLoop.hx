@@ -29,6 +29,7 @@ class WebSocketServerLoop<TClientData:ClientData> extends neko.net.ServerLoop<TC
 	public function new(processNewData : Socket->TClientData)
 	{
 		super(processNewData);
+		listenCount = 128;
 	}
 	
 	override function processClientData(d:TClientData, buf:Bytes, bufpos:Int, buflen:Int) : Int
