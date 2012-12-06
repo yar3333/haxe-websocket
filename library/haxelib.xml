@@ -7,5 +7,5 @@
     <tag v='js'/>
     <tag v='php'/>
     <description>HTML5 websocket support for js (client) and neko/php (server).</description>
-	<version name='1.3'>Support connection to websocket from the server.</version>
+	<version name='1.4'>Set listenCount to 128 by default.</version>
 </project>
