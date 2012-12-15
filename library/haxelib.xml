@@ -6,6 +6,6 @@
     <tag v='neko'/>
     <tag v='js'/>
     <tag v='php'/>
-    <description>HTML5 websocket support for js (client) and neko/php (server).</description>
-	<version name='1.4'>Set listenCount to 128 by default.</version>
+    <description>HTML5 websocket support for neko/php/js.</description>
+	<version name='1.5'>WebSocket.recv() from server fixed.</version>
 </project>
