@@ -1,8 +1,7 @@
 package neko.net;
 
-import haxe.Stack;
 import neko.Lib;
-
+import haxe.Stack;
 import sys.net.Socket;
 import sys.net.Host;
 import sys.net.WebSocket;

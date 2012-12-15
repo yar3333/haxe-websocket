@@ -115,31 +115,93 @@ class WebSocket
 	public function recv() : String
 	{
 		var opcode = socket.input.readByte();
+		
+		if (opcode == 0x00)
+		{
+			var s = "";
+			var b : Int;
+			while ((b = socket.input.readByte()) != 0xFF)
+			{
+				s += String.fromCharCode(b);
+			}
+			return s;
+		}
+		
 		if (opcode == 0x81) // 0x81 = fin & text
 		{
 			var len = socket.input.readByte();
-			if (len & 0x80 == 0) // !mask
+			if (!isServer)
 			{
-				if (len == 126)
+				if (len & 0x80 == 0) // !mask
 				{
-					var lenByte0 = socket.input.readByte();
-					var lenByte1 = socket.input.readByte();
-					len = (lenByte0 << 8) + lenByte1;
+					if (len == 126)
+					{
+						var lenByte0 = socket.input.readByte();
+						var lenByte1 = socket.input.readByte();
+						len = (lenByte0 << 8) + lenByte1;
+					}
+					else
+					if (len > 126)
+					{
+						var lenByte0 = socket.input.readByte();
+						var lenByte1 = socket.input.readByte();
+						var lenByte2 = socket.input.readByte();
+						var lenByte3 = socket.input.readByte();
+						len = (lenByte0 << 24) + (lenByte1 << 16) + (lenByte2 << 8) + lenByte3;
+					}
+					return socket.input.read(len).toString();
 				}
 				else
-				if (len > 126)
 				{
-					var lenByte0 = socket.input.readByte();
-					var lenByte1 = socket.input.readByte();
-					var lenByte2 = socket.input.readByte();
-					var lenByte3 = socket.input.readByte();
-					len = (lenByte0 << 24) + (lenByte1 << 16) + (lenByte2 << 8) + lenByte3;
+					throw "Expected unmasked data.";
 				}
-				return socket.input.read(len).toString();
 			}
 			else
 			{
-				throw "Expected unmasked data.";
+				if (len & 0x80 != 0) // mask
+				{
+					len &= 0x7F;
+					
+					if (len == 126)
+					{
+						var b2 = socket.input.readByte();
+						var b3 = socket.input.readByte();
+						len = (b2 << 8) + b3;
+					}
+					else
+					if (len == 127)
+					{
+						var b2 = socket.input.readByte();
+						var b3 = socket.input.readByte();
+						var b4 = socket.input.readByte();
+						var b5 = socket.input.readByte();
+						len = (b2 << 24) + (b3 << 16) + (b4 << 8) + b5;
+					}
+					
+					//Lib.println("len = " + len);
+					
+					// direct array init not work corectly!
+					var mask = [];
+					mask.push(socket.input.readByte());
+					mask.push(socket.input.readByte());
+					mask.push(socket.input.readByte());
+					mask.push(socket.input.readByte());
+					
+					//Lib.println("mask = " + mask);
+					
+					var data = new StringBuf();
+					for (i in 0...len)
+					{
+						data.addChar(socket.input.readByte() ^ mask[i % 4]);
+					}
+					
+					//Lib.println("readed = " + data.toString());
+					return data.toString();
+				}
+				else
+				{
+					throw "Expected masked data.";
+				}
 			}
 		}
 		else
