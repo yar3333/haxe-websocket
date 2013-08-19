@@ -21,11 +21,7 @@ class ClientData
 
 class WebSocketServerLoop<TClientData:ClientData> extends neko.net.ServerLoop<TClientData>
 {
-	public var processIncomingMessage : TClientData->String->Void;
-	public var processDisconnect : TClientData->Void;
-	public var processUpdate : Void->Void;
-	
-	public function new(processNewData : Socket->TClientData)
+	public function new(?processNewData:Socket->TClientData)
 	{
 		super(processNewData);
 		listenCount = 128;
@@ -195,29 +191,14 @@ class WebSocketServerLoop<TClientData:ClientData> extends neko.net.ServerLoop<TC
 		}
 	}
 	
-	override function onError(e:Dynamic)
-	{
-		trace(e + Stack.toString(Stack.exceptionStack()));
-	}
-	
-	override function clientDisconnected(d:TClientData)
-	{
-		if (processDisconnect != null)
-		{
-			processDisconnect(d);
-		}
-	}
-	
-	override function update()
-	{
-		if (processUpdate != null)
-		{
-			processUpdate();
-		}
-	}
-	
 	public function stop()
 	{
 		socks[0].close();
+	}
+	
+	// --- CUSTOMIZABLE API ---
+	
+	public dynamic function processIncomingMessage(data:TClientData, message:String)
+	{
 	}
 }
