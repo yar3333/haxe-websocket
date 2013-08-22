@@ -1,0 +1,11 @@
+{
+  "name": "WebSocket",
+  "license": "LGPL",
+  "tags": ["html5","websocket","websockets","neko","js","php"],
+  "description": "HTML5 websocket support for neko/php/js.",
+  "contributors": ["yar3333"],
+  "releasenote": "WebSocket.recv() from server fixed.",
+  "version": "1.5.1",
+  "url": "https://code.google.com/p/haxe-websocket",
+  "dependencies": {}
+}
