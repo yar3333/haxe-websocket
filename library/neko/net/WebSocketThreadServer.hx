@@ -108,7 +108,7 @@ class WebSocketThreadServer
 			}
 		}
 		
-		var clientHeaders = new Hash<String>();
+		var clientHeaders = new Map<String,String>();
 		do
 		{
 			try

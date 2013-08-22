@@ -167,7 +167,7 @@ class WebSocketServerLoop<TClientData:ClientData> extends neko.net.ServerLoop<TC
 					
 					var lines = buf.readString(bufpos, i - bufpos).split("\r\n");
 					//var methodUrlProtocol = lines[0];
-					var clientHeaders = new Hash<String>();
+					var clientHeaders = new Map<String,String>();
 					for (j in 1...lines.length)
 					{
 						var t = lines[j].split(":");
