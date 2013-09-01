@@ -1,6 +1,5 @@
 package js;
 
-import js.Lib;
 import js.SWFObject;
 
 @:native("WebSocket") extern class WebSocket
@@ -10,17 +9,11 @@ import js.SWFObject;
 		haxe.macro.Tools.includeFile("js/WebSocket.js");
 	}
 	
-	public static var WEB_SOCKET_SWF_LOCATION(WEB_SOCKET_SWF_LOCATION_getter, WEB_SOCKET_SWF_LOCATION_setter) : String;
-	private static inline function WEB_SOCKET_SWF_LOCATION_getter() : String
-	{
-		return cast(Lib.window).WEB_SOCKET_SWF_LOCATION;
-	}
-	private static inline function WEB_SOCKET_SWF_LOCATION_setter(path:String) : String
-	{
-		return cast(Lib.window).WEB_SOCKET_SWF_LOCATION = path;
-	}
+	static var WEB_SOCKET_SWF_LOCATION(get_WEB_SOCKET_SWF_LOCATION, set_WEB_SOCKET_SWF_LOCATION) : String;
+	private static inline function get_WEB_SOCKET_SWF_LOCATION() : String return cast(js.Browser.window).WEB_SOCKET_SWF_LOCATION;
+	private static inline function set_WEB_SOCKET_SWF_LOCATION(path:String) : String	return cast(js.Browser.window).WEB_SOCKET_SWF_LOCATION = path;
 	
-	public var readyState(default, null) : Int;
+	var readyState(default, null) : Int;
 	
 	/**
 	 * Url example: "ws://example.com:10081/".
