@@ -1,5 +1,5 @@
 {
-  "name": "WebSocket",
+  "name": "websocket",
   "license": "LGPL",
   "tags": ["html5","websocket","websockets","neko","js","php"],
   "description": "HTML5 websocket support for neko/php/js.",
