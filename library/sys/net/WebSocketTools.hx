@@ -1,13 +1,13 @@
 package sys.net;
 
-import haxe.SHA1;
+import haxe.crypto.Sha1;
 import sys.net.Socket;
 
 class WebSocketTools 
 {
 	public static function sendServerHandShake(socket:Socket, inpKey:String)
 	{
-		var outKey = encodeBase64(hex2data(SHA1.encode(StringTools.trim(inpKey) + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11")));
+		var outKey = encodeBase64(hex2data(Sha1.encode(StringTools.trim(inpKey) + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11")));
 		
 		var s = "HTTP/1.1 101 Switching Protocols\r\n"
 			  + "Upgrade: websocket\r\n"
@@ -50,6 +50,6 @@ class WebSocketTools
 			case 1: "==";
 			default: "";
 		};
-		return haxe.BaseCode.encode(content, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/") + suffix;
+		return haxe.crypto.BaseCode.encode(content, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/") + suffix;
 	}
 }
