@@ -2,36 +2,41 @@
 
 WebSocket implementation for neko server.
 
-## Example of the server code (server/neko)
+## Example
+
+See `tests` folder. Quick code below:
 
 ```haxe
+// Haxe
+
 class MyDataRelatedToConnection extends WebSocketServerLoop.ClientData
 {
 	// your custom fields if you need data associated to each connection
 }
-```
 
-```haxe
 class Main
 {
 	static function main()
 	{
-		var serverLoop = new WebSocketServerLoop<MyDataRelatedToConnection>(HERE_YOU_CAN_OPTIONALLY_SPECIFY_HANDLER_CALLED_ON_NEW_CONNECTION_FROM_CLIENT_TO_CREATE_YOUR_CUSTOM_MyDataRelatedToConnection);
-
+		var serverLoop = new WebSocketServerLoop<MyDataRelatedToConnection>(function(socket) return new MyDataRelatedToConnection(socket));
+		
 		serverLoop.processIncomingMessage = function(data:MyDataRelatedToConnection, message:String)
 		{
-			trace(message);
+			trace("Incoming: " + message);
 			// use may use data.ws to send answer/close connection
 		};
-
-		serverLoop.run("YOUR_HOSTNAME_TO_BIND", YOUR_PORT_NUMBER_TO_BIND);   
+		
+		serverLoop.run(new Host("localhost"), 5121);   
 	}
 }
 ```
 
-## Example of the client code (browser/js)
+```js
+// JavaScript
 
-```haxe
-var ws = new js.WebSocket("ws://YOUR_HOSTNAME:PORT"); // use native js WebSocket!
-ws.send("TestString");
+var ws = new WebSocket("ws://localhost:5121"); // use native js WebSocket class!
+ws.onopen = function()
+{
+	ws.send("TestString");
+};
 ```
