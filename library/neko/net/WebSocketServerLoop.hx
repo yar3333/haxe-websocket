@@ -1,12 +1,9 @@
 package neko.net;
 
-import neko.Lib;
-import haxe.Stack;
+import haxe.io.Bytes;
 import sys.net.Socket;
-import sys.net.Host;
 import sys.net.WebSocket;
 import sys.net.WebSocketTools;
-import haxe.io.Bytes;
 
 class ClientData
 {
@@ -21,7 +18,7 @@ class ClientData
 
 class WebSocketServerLoop<TClientData:ClientData> extends neko.net.ServerLoop<TClientData>
 {
-	public function new(?processNewData:Socket->TClientData)
+	public function new(processNewData:Socket->TClientData)
 	{
 		super(processNewData);
 		listenCount = 128;
@@ -39,7 +36,7 @@ class WebSocketServerLoop<TClientData:ClientData> extends neko.net.ServerLoop<TC
 				{
 					if (buf.get(i) == 0xFF)
 					{
-						processIncomingMessage(d, buf.readString(bufpos + 1, i - bufpos - 1));
+						processIncomingMessage(d, buf.getString(bufpos + 1, i - bufpos - 1));
 					}
 					return i + 1 - bufpos;
 				}
@@ -116,7 +113,7 @@ class WebSocketServerLoop<TClientData:ClientData> extends neko.net.ServerLoop<TC
 			}
 			else
 			{
-				throw "Bad websocket string. First char of '" + buf.readString(bufpos, buflen - bufpos) + "' is " + buf.get(bufpos) + ".";
+				throw "Bad websocket string. First char of '" + buf.getString(bufpos, buflen - bufpos) + "' is " + buf.get(bufpos) + ".";
 			}
 			return 0;
 		}
@@ -165,7 +162,7 @@ class WebSocketServerLoop<TClientData:ClientData> extends neko.net.ServerLoop<TC
 					//Lib.println("OK");
 					//Lib.println("HandShake received.");
 					
-					var lines = buf.readString(bufpos, i - bufpos).split("\r\n");
+					var lines = buf.getString(bufpos, i - bufpos).split("\r\n");
 					//var methodUrlProtocol = lines[0];
 					var clientHeaders = new Map<String,String>();
 					for (j in 1...lines.length)
