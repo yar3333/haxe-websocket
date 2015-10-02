@@ -46,8 +46,8 @@
   <!-- Other project options -->
   <options>
     <option showHiddenPaths="False" />
-    <option testMovie="OpenDocument" />
-    <option testMovieCommand="" />
+    <option testMovie="Custom" />
+    <option testMovieCommand="run.cmd" />
   </options>
   <!-- Plugin storage -->
   <storage />
