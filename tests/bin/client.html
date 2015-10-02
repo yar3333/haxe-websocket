@@ -1,0 +1,11 @@
+<html>
+	<body>
+		<script>
+			var ws = new WebSocket("ws://localhost:5121");
+			ws.onopen = function()
+			{
+				ws.send("HelloFromBrowser");
+			};
+		</script>
+	</body>
+</html>
