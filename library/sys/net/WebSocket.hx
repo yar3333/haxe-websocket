@@ -1,11 +1,5 @@
 package sys.net;
 
-#if php
-import php.Lib;
-#elseif neko
-import neko.Lib;
-#end
-
 import sys.net.Socket;
 import sys.net.Host;
 
@@ -178,7 +172,7 @@ class WebSocket
 						len = (b2 << 24) + (b3 << 16) + (b4 << 8) + b5;
 					}
 					
-					//Lib.println("len = " + len);
+					//Sys.println("len = " + len);
 					
 					// direct array init not work corectly!
 					var mask = [];
@@ -187,7 +181,7 @@ class WebSocket
 					mask.push(socket.input.readByte());
 					mask.push(socket.input.readByte());
 					
-					//Lib.println("mask = " + mask);
+					//Sys.println("mask = " + mask);
 					
 					var data = new StringBuf();
 					for (i in 0...len)
@@ -195,7 +189,7 @@ class WebSocket
 						data.addChar(socket.input.readByte() ^ mask[i % 4]);
 					}
 					
-					//Lib.println("readed = " + data.toString());
+					//Sys.println("readed = " + data.toString());
 					return data.toString();
 				}
 				else
