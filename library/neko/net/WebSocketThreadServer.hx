@@ -1,6 +1,5 @@
 package neko.net;
 
-import neko.Lib;
 import neko.vm.Thread;
 import sys.net.Socket;
 import sys.net.Host;
@@ -14,7 +13,7 @@ class WebSocketThreadServer
 	
 	var stopRequested = false;
 	
-	public var listen = 128;
+	public var maxPendingConnections = 128;
 	public var flashSocketPolicy = true;
 	public var threadCount(default, null) : Int;
 	
@@ -29,38 +28,38 @@ class WebSocketThreadServer
 		
 		var listener = new Socket();
 		listener.bind(new Host(host), port);
-		listener.listen(listen);
+		listener.listen(maxPendingConnections);
 		
 		while (true)
 		{
-			Lib.println("begin accept...");
+			Sys.println("begin accept...");
 			var socket = listener.accept();
 			
 			if (stopRequested) break;
 			
-			Lib.println("accepted");
+			Sys.println("accepted");
 			Thread.create(function()
 			{
 				threadCount++;
 				
 				try
 				{
-					Lib.println("call shakeHands...");
+					Sys.println("call shakeHands...");
 					
 					if (shakeHands(socket, flashSocketPolicy))
 					{
-						Lib.println("shakeHands ended OK");
+						Sys.println("shakeHands ended OK");
 						processIncomingConnection(new WebSocket(socket, true)); 
 					}
 					else
 					{
-						Lib.println("shakeHands ended FAIL");
+						Sys.println("shakeHands ended FAIL");
 					}
 					try { socket.close(); } catch (e:Dynamic) {}
 				}
 				catch (e:Dynamic)
 				{
-					onError(e, haxe.Stack.exceptionStack());
+					onError(e, haxe.CallStack.exceptionStack());
 				}
 				
 				threadCount--;
@@ -79,7 +78,7 @@ class WebSocketThreadServer
 			try
 			{
 				rLine = socket.input.readLine(); // This is for the GET / HTTP/1.1 Line
-				//Lib.println("shake receive: " + rLine);
+				//Sys.println("shake receive: " + rLine);
 			}
 			catch (e:Dynamic)
 			{
@@ -95,14 +94,14 @@ class WebSocketThreadServer
 				if (ms.indexOf(String.fromCharCode(0x00)) > -1)
 				{
 					socket.output.writeString('<cross-domain-policy><allow-access-from domain="*" to-ports="*" /></cross-domain-policy>' + String.fromCharCode(0x00));
-					//Lib.println("shake send: POLICY");
+					//Sys.println("shake send: POLICY");
 					socket.close();
 					return false;
 				} 
 				else if (ms.indexOf("\r\n") >= 0)
 				{
 					rLine = ms;
-					//Lib.println("shake receive: " + rLine);
+					//Sys.println("shake receive: " + rLine);
 					break;
 				}
 			}
@@ -114,7 +113,7 @@ class WebSocketThreadServer
 			try
 			{
 				rLine = socket.input.readLine();
-				//Lib.println("shake receive: " + rLine);
+				//Sys.println("shake receive: " + rLine);
 				var t = rLine.split(":");
 				if (t.length == 2)
 				{
@@ -142,10 +141,10 @@ class WebSocketThreadServer
 	
 	// --- CUSTOMIZABLE API ---
 	
-	public dynamic function onError(e:Dynamic, stack) : Void
+	public dynamic function onError(e:Dynamic, stack:Array<haxe.CallStack.StackItem>) : Void
 	{
 		var estr = try Std.string(e) catch (e2:Dynamic) "???" + try "[" + Std.string(e2) + "]" catch ( e : Dynamic ) "";
-		Lib.print(estr + "\n" + haxe.Stack.toString(stack));
+		Sys.println(estr + haxe.CallStack.toString(stack));
 	}
 	
 	public dynamic function processIncomingConnection(ws:WebSocket) : Void
