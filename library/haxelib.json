@@ -4,8 +4,8 @@
   "tags": ["html5","websocket","websockets","neko","js","php"],
   "description": "HTML5 websocket support for neko/php/js.",
   "contributors": ["yar3333"],
-  "releasenote": "Haxe 3.2 support. Add example. Fix README.",
-  "version": "1.6.0",
+  "releasenote": "Remove custom js.Websocket, use standard js.html.WebSocket instead.",
+  "version": "1.7.0",
   "url": "https://bitbucket.org/yar3333/haxe-websocket",
   "dependencies": {}
 }
