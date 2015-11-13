@@ -1,26 +1,9 @@
 package sys.net;
 
-import sys.net.Socket;
 import sys.net.Host;
+import sys.net.Socket;
 
-class WebSocketCloseCode 
-{
-	public static inline var Normal = 1000;
-	public static inline var Shutdown = 1001;
-	public static inline var ProtocolError = 1002;
-	public static inline var DataError = 1003;
-	public static inline var Reserved1 = 1004;
-	public static inline var NoStatus = 1005;
-	public static inline var CloseError = 1006;
-	public static inline var UTF8Error = 1007;
-	public static inline var PolicyError = 1008;
-	public static inline var TooLargeMessage = 1009;
-	public static inline var ClientExtensionError = 1010;
-	public static inline var ServerRequestError = 1011;
-	public static inline var TLSError = 1015;
-}
-
-class WebSocketFrame 
+class FrameCode
 {
 	public static inline var Continuation = 0x00;
 	public static inline var Text = 0x01;
@@ -29,6 +12,8 @@ class WebSocketFrame
 	public static inline var Ping = 0x09;
 	public static inline var Pong = 0x0A;
 }
+
+class CloseException { public function new() { }; public function toString() return Type.getClassName(Type.getClass(this)); }
 
 class WebSocket
 {
@@ -42,12 +27,12 @@ class WebSocket
 		this.isServer = isServer;
 	}
 	
-	public static function connect(host:String, port:Int, origin:String, url:String) : WebSocket
+	public static function connect(host:String, port:Int, origin:String, url:String, key:String) : WebSocket
 	{
 		var socket = new Socket();
 		socket.connect(new Host(host), port);
 		
-		WebSocketTools.sendClientHandShake(socket, url, host, port, "key", "haquery");
+		WebSocketTools.sendClientHandShake(socket, url, host, port, key, origin);
 		
 		var rLine : String;
 		while((rLine = socket.input.readLine()) != "")
@@ -108,101 +93,41 @@ class WebSocket
 	
 	public function recv() : String
 	{
-		var opcode = socket.input.readByte();
+		var data = socket.input.readByte();
 		
-		if (opcode == 0x00)
-		{
-			var s = "";
-			var b : Int;
-			while ((b = socket.input.readByte()) != 0xFF)
-			{
-				s += String.fromCharCode(b);
-			}
-			return s;
-		}
+		//trace("data = 0x" + StringTools.hex(data) + (socket.custom != null ? " (custom = " + socket.custom + ")" : ""));
 		
-		if (opcode == 0x81) // 0x81 = fin & text
+		var opcode = data & 0xF;
+		var rsv = (data >> 1) & 0x07;
+		var fin = (data >> 7) != 0;
+		//trace("opcode = 0x" + StringTools.hex(opcode) + "; fin = " + fin);
+		
+		if (fin)
 		{
-			var len = socket.input.readByte();
-			if (!isServer)
+			switch (opcode)
 			{
-				if (len & 0x80 == 0) // !mask
-				{
-					if (len == 126)
-					{
-						var lenByte0 = socket.input.readByte();
-						var lenByte1 = socket.input.readByte();
-						len = (lenByte0 << 8) + lenByte1;
-					}
-					else
-					if (len > 126)
-					{
-						var lenByte0 = socket.input.readByte();
-						var lenByte1 = socket.input.readByte();
-						var lenByte2 = socket.input.readByte();
-						var lenByte3 = socket.input.readByte();
-						len = (lenByte0 << 24) + (lenByte1 << 16) + (lenByte2 << 8) + lenByte3;
-					}
-					return socket.input.read(len).toString();
-				}
-				else
-				{
-					throw "Expected unmasked data.";
-				}
-			}
-			else
-			{
-				if (len & 0x80 != 0) // mask
-				{
-					len &= 0x7F;
+				case FrameCode.Text:
+					return readString();
 					
-					if (len == 126)
-					{
-						var b2 = socket.input.readByte();
-						var b3 = socket.input.readByte();
-						len = (b2 << 8) + b3;
-					}
-					else
-					if (len == 127)
-					{
-						var b2 = socket.input.readByte();
-						var b3 = socket.input.readByte();
-						var b4 = socket.input.readByte();
-						var b5 = socket.input.readByte();
-						len = (b2 << 24) + (b3 << 16) + (b4 << 8) + b5;
-					}
-					
-					//Sys.println("len = " + len);
-					
-					// direct array init not work corectly!
-					var mask = [];
-					mask.push(socket.input.readByte());
-					mask.push(socket.input.readByte());
-					mask.push(socket.input.readByte());
-					mask.push(socket.input.readByte());
-					
-					//Sys.println("mask = " + mask);
-					
-					var data = new StringBuf();
-					for (i in 0...len)
-					{
-						data.addChar(socket.input.readByte() ^ mask[i % 4]);
-					}
-					
-					//Sys.println("readed = " + data.toString());
-					return data.toString();
-				}
-				else
-				{
-					throw "Expected masked data.";
-				}
+				case FrameCode.Close:
+					throw new CloseException();
 			}
 		}
 		else
 		{
-			throw "Unsupported websocket opcode: " + opcode;
+			if (opcode == FrameCode.Continuation)
+			{
+				var s = "";
+				var b : Int;
+				while ((b = socket.input.readByte()) != 0xFF)
+				{
+					s += String.fromCharCode(b);
+				}
+				return s;
+			}
 		}
-		return null;
+		
+		throw "Unsupported websocket opcode/fin: 0x" + StringTools.hex(opcode) + "/" + fin;
 	}
 	
 	/*public function close(aCloseCode:Int, aCloseReason:String):Void
@@ -225,4 +150,85 @@ class WebSocket
 		
 		socket.close();
     }*/
+	
+	function readString() : String
+	{
+		var data = socket.input.readByte();
+		
+		if (!isServer)
+		{
+			if (data & 0x80 == 0) // !mask
+			{
+				var len = data & 0x7F;
+				
+				if (len == 126)
+				{
+					var lenByte0 = socket.input.readByte();
+					var lenByte1 = socket.input.readByte();
+					len = (lenByte0 << 8) + lenByte1;
+				}
+				else
+				if (len > 126)
+				{
+					var lenByte0 = socket.input.readByte();
+					var lenByte1 = socket.input.readByte();
+					var lenByte2 = socket.input.readByte();
+					var lenByte3 = socket.input.readByte();
+					len = (lenByte0 << 24) + (lenByte1 << 16) + (lenByte2 << 8) + lenByte3;
+				}
+				return socket.input.read(len).toString();
+			}
+			else
+			{
+				throw "Expected unmasked data.";
+			}
+		}
+		else
+		{
+			if (data & 0x80 != 0) // mask
+			{
+				var len = data & 0x7F;
+				
+				if (len == 126)
+				{
+					var b2 = socket.input.readByte();
+					var b3 = socket.input.readByte();
+					len = (b2 << 8) + b3;
+				}
+				else
+				if (len == 127)
+				{
+					var b2 = socket.input.readByte();
+					var b3 = socket.input.readByte();
+					var b4 = socket.input.readByte();
+					var b5 = socket.input.readByte();
+					len = (b2 << 24) + (b3 << 16) + (b4 << 8) + b5;
+				}
+				
+				//Sys.println("len = " + len);
+				
+				// direct array init not work corectly!
+				var mask = [];
+				mask.push(socket.input.readByte());
+				mask.push(socket.input.readByte());
+				mask.push(socket.input.readByte());
+				mask.push(socket.input.readByte());
+				
+				//Sys.println("mask = " + mask);
+				
+				var r = new StringBuf();
+				for (i in 0...len)
+				{
+					r.addChar(socket.input.readByte() ^ mask[i % 4]);
+				}
+				
+				//Sys.println("readed = " + r.toString());
+				return r.toString();
+			}
+			else
+			{
+				throw "Expected masked data.";
+			}
+		}
+	}
 }
