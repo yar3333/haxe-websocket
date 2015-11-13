@@ -1,8 +1,8 @@
 package neko.net;
 
 import neko.vm.Thread;
-import sys.net.Socket;
 import sys.net.Host;
+import sys.net.Socket;
 import sys.net.WebSocket;
 import sys.net.WebSocketTools;
 
@@ -144,7 +144,7 @@ class WebSocketThreadServer
 	public dynamic function onError(e:Dynamic, stack:Array<haxe.CallStack.StackItem>) : Void
 	{
 		var estr = try Std.string(e) catch (e2:Dynamic) "???" + try "[" + Std.string(e2) + "]" catch ( e : Dynamic ) "";
-		Sys.println(estr + haxe.CallStack.toString(stack));
+		Sys.println(estr + haxe.CallStack.toString(stack).split("\n").join("\n\t"));
 	}
 	
 	public dynamic function processIncomingConnection(ws:WebSocket) : Void
