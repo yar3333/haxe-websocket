@@ -24,7 +24,7 @@ class CloseException
 		this.message = message;
 	}
 	
-	public function toString() return Type.getClassName(Type.getClass(this)) + ": " + code + " / " + message;
+	public function toString() return Type.getClassName(Type.getClass(this)) + ": " + code + (message != null && message != "" ? " / " + message : "");
 }
 
 class WebSocket
