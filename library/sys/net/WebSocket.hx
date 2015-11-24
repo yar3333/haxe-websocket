@@ -13,7 +13,19 @@ class FrameCode
 	public static inline var Pong = 0x0A;
 }
 
-class CloseException { public function new() { }; public function toString() return Type.getClassName(Type.getClass(this)); }
+class CloseException
+{
+	public var code : Int;
+	public var message : String;
+	
+	public function new(code:Int, message:String)
+	{
+		this.code = code;
+		this.message = message;
+	}
+	
+	public function toString() return Type.getClassName(Type.getClass(this)) + ": " + code + " / " + message;
+}
 
 class WebSocket
 {
@@ -43,9 +55,52 @@ class WebSocket
 		return new WebSocket(socket, false);
 	}
 	
-	public function send(data:String) : Void
+	public function send(data:String)
 	{
-		socket.output.writeByte(0x81);
+		sendFrame(FrameCode.Text, true, data);
+	}
+	
+	public function recv() : String
+	{
+		var s = "";
+		
+		while (true)
+		{
+			var frame = recvFrame();
+			
+			switch (frame.code)
+			{
+				case FrameCode.Text:
+					s += frame.data;
+					if (frame.fin) return s;
+					
+				case FrameCode.Close:
+					throw new CloseException
+					(
+						frame.data.length >= 2 ? (frame.data.charCodeAt(0) << 8) | frame.data.charCodeAt(1) : 0,
+						frame.data.length > 2 ? frame.data.substring(2) : ""
+					);
+					
+				case FrameCode.Ping:
+					sendFrame(FrameCode.Pong, true, "");	
+					
+				case FrameCode.Pong:
+			}
+			
+			throw "Unsupported websocket opcode/fin: 0x" + StringTools.hex(frame.code) + "/" + frame.fin;
+		}
+	}
+	
+	public function close(?code:Int, reason="")
+    {
+		var s = code != null ? String.fromCharCode(code >> 8) + String.fromCharCode(code & 0x0F) + reason : "";
+		sendFrame(FrameCode.Close, true, s);
+		socket.close();
+    }
+	
+	function sendFrame(code:Int, fin:Bool, data:String) : Void
+	{
+		socket.output.writeByte((fin ? 0x80 : 0x00) | code);
 		
 		var len = 0;
 		if       (data.length < 126) 	len = data.length;
@@ -88,70 +143,28 @@ class WebSocket
 			}
 			socket.output.writeString(maskedData.toString());
 		}
-		
 	}
 	
-	public function recv() : String
+	function recvFrame() : { code:Int, fin:Bool, data:String }
 	{
 		var data = socket.input.readByte();
-		
-		//trace("data = 0x" + StringTools.hex(data) + (socket.custom != null ? " (custom = " + socket.custom + ")" : ""));
 		
 		var opcode = data & 0xF;
 		var rsv = (data >> 1) & 0x07;
 		var fin = (data >> 7) != 0;
 		//trace("opcode = 0x" + StringTools.hex(opcode) + "; fin = " + fin);
 		
-		if (fin)
-		{
-			switch (opcode)
-			{
-				case FrameCode.Text:
-					return readString();
-					
-				case FrameCode.Close:
-					throw new CloseException();
-			}
-		}
-		else
-		{
-			if (opcode == FrameCode.Continuation)
-			{
-				var s = "";
-				var b : Int;
-				while ((b = socket.input.readByte()) != 0xFF)
-				{
-					s += String.fromCharCode(b);
-				}
-				return s;
-			}
-		}
+		var s = recvFrameData();
 		
-		throw "Unsupported websocket opcode/fin: 0x" + StringTools.hex(opcode) + "/" + fin;
+		return
+		{
+			code: opcode,
+			fin: fin,
+			data: s
+		};
 	}
 	
-	/*public function close(aCloseCode:Int, aCloseReason:String):Void
-    {
-        var ms:MemoryStream = new MemoryStream();
-		
-		var bytesA = new ByteArray();
-		bytesA[0] = Std.int((aCloseCode / 256));
-		bytesA[1] = Std.int((aCloseCode % 256));
-		ms.Write(bytesA, 0, 2);
-		
-		var bytesB = Encoding.UTF8.GetBytes(aCloseReason);
-		while (bytesB.length > 123)
-		{
-			aCloseReason = aCloseReason.substr(0, aCloseReason.length - 1);
-			bytesB = Encoding.UTF8.GetBytes(aCloseReason);
-		}
-		ms.Write(bytesB, 0, bytesB.length);
-		send(true, false, false, false, WebSocketFrame.Close, ms);
-		
-		socket.close();
-    }*/
-	
-	function readString() : String
+	function recvFrameData() : String
 	{
 		var data = socket.input.readByte();
 		
