@@ -55,7 +55,7 @@ class WebSocketThreadServer
 					{
 						Sys.println("shakeHands ended FAIL");
 					}
-					try { socket.close(); } catch (e:Dynamic) {}
+					try socket.close() catch (e:Dynamic) {}
 				}
 				catch (e:Dynamic)
 				{
@@ -147,7 +147,5 @@ class WebSocketThreadServer
 		Sys.println(estr + haxe.CallStack.toString(stack).split("\n").join("\n\t"));
 	}
 	
-	public dynamic function processIncomingConnection(ws:WebSocket) : Void
-	{
-	}
+	public dynamic function processIncomingConnection(ws:WebSocket) : Void {}
 }
