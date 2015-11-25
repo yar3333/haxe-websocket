@@ -7,9 +7,9 @@ WebSocket implementation for sys platforms. Unblocked and threaded servers for n
 See `tests` folder. Quick code below:
 
 ```haxe
-// haxe / neko
+// Haxe / Neko
 
-class MyDataRelatedToConnection extends neko.net.WebSocketServerLoop.ClientData
+class MyConnection extends neko.net.WebSocketServerLoop.ClientData
 {
 	// your custom fields if you need data associated to each connection
 }
@@ -18,12 +18,12 @@ class Main
 {
 	static function main()
 	{
-		var serverLoop = new neko.net.WebSocketServerLoop<MyDataRelatedToConnection>(function(socket) return new MyDataRelatedToConnection(socket));
+		var serverLoop = new neko.net.WebSocketServerLoop<MyConnection>(function(socket) return new MyConnection(socket));
 		
-		serverLoop.processIncomingMessage = function(data:MyDataRelatedToConnection, message:String)
+		serverLoop.processIncomingMessage = function(connection:MyConnection, message:String)
 		{
 			trace("Incoming: " + message);
-			// use may use data.ws to send answer/close connection
+			// use connection.ws to send answer/close connection
 		};
 		
 		serverLoop.run(new Host("localhost"), 5121);   
@@ -31,8 +31,8 @@ class Main
 }
 ```
 
-```js
-// JavaScript
+```javascript
+// JavaScript or Haxe
 
 var ws = new WebSocket("ws://localhost:5121"); // use native js WebSocket class (js.html.WebSocket in haxe)
 ws.onopen = function()
