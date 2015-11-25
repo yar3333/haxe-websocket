@@ -85,9 +85,11 @@ class WebSocket
 					sendFrame(FrameCode.Pong, true, "");	
 					
 				case FrameCode.Pong:
+					// nothing to do
+				
+				case _:
+					throw "Unsupported websocket opcode/fin: 0x" + StringTools.hex(frame.code) + "/" + frame.fin;
 			}
-			
-			throw "Unsupported websocket opcode/fin: 0x" + StringTools.hex(frame.code) + "/" + frame.fin;
 		}
 	}
 	
