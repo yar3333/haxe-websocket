@@ -4,8 +4,8 @@
   "tags": ["html5","websocket","websockets","neko","js","php"],
   "description": "HTML5 websocket support for sys platforms. Unblocked and threaded servers for neko.",
   "contributors": ["yar3333"],
-  "releasenote": "Added support: ping/pong, continuation and close.",
-  "version": "2.0.0",
+  "releasenote": "Unexpected \"unsupported opcode\" bugfix. README improvements.",
+  "version": "2.0.1",
   "url": "https://bitbucket.org/yar3333/haxe-websocket",
   "dependencies": {}
 }
