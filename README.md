@@ -23,7 +23,8 @@ class Main
 		serverLoop.processIncomingMessage = function(connection:MyConnection, message:String)
 		{
 			trace("Incoming: " + message);
-			// use connection.ws to send answer/close connection
+			// use "connection.ws" to send answer
+			// use "serverLoop.closeConnection(connection.ws.socket)" to close connection and remove socket from processing
 		};
 		
 		serverLoop.run(new Host("localhost"), 5121);   
